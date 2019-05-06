@@ -12,6 +12,10 @@ import (
 // Handle closing channel as a result of message from server
 var closeChan = make(chan bool, 1)
 
+// main entry point creates the connection to an existing chat server
+//	on default port 23
+//	Spins off go routines for sending messages, and writing messages
+//	from the server
 func main() {
 	conn, err := net.Dial("tcp", ":23")
 	if err != nil {
@@ -42,12 +46,16 @@ func main() {
 	}
 }
 
+// send captures standard io and sends it to the server
 func send(conn net.Conn) {
 	for {
 		text, _ := bufio.NewReader(os.Stdin).ReadString('\n')
 		conn.Write([]byte(text))
 	}
 }
+
+// receive reads from the connection values written to the
+//	connection by the server
 func receive(conn net.Conn) {
 	for {
 		message, _ := bufio.NewReader(conn).ReadString('\n')
