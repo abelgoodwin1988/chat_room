@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"time"
 )
 
 // Client contains a clients name and net.Conn information
@@ -77,7 +78,8 @@ func readClientMessages(client Client) {
 				closeClientConnection(client)
 				return
 			}
-			messages <- fmt.Sprintf("%v: %v", client.name, input)
+			t := time.Now()
+			messages <- fmt.Sprintf("%v %v: %v", t.Format(time.RFC822), client.name, input)
 		}
 	}()
 }
