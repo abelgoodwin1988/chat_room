@@ -79,7 +79,7 @@ func readClientMessages(client Client) {
 				return
 			}
 			t := time.Now()
-			messages <- fmt.Sprintf("%v %v: %v", t.Format(time.RFC822), client.name, input)
+			messages <- fmt.Sprintf("%q %q: %q", t.Format(time.RFC822), client.name, input)
 		}
 	}()
 }
