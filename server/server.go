@@ -16,16 +16,20 @@ type Client struct {
 	conn net.Conn
 }
 
-var clients []Client
-var messages = make(chan string)
-var closeChan = make(chan os.Signal, 1)
+var clients []Client                    // maintains all current clients
+var messages = make(chan string)        // communicates client messages
+var closeChan = make(chan os.Signal, 1) // communicates closing of server
 
+// main creates a listener and creates a loop for accepting
+//	client connections, and spinning of handlers for that
+//	client connection.
 func main() {
 	listener, err := net.Listen("tcp", ":23")
 	if err != nil {
 		log.Fatalf("Failed to open chat server at: %v\n", listener.Addr())
 		listener.Close()
 	}
+	log.Printf("Opened chat server at: %v\n", listener.Addr())
 
 	// cleanup and signal close
 	signal.Notify(closeChan, os.Interrupt)
@@ -36,8 +40,8 @@ func main() {
 	}(listener)
 	defer listener.Close()
 
-	log.Printf("Opened chat server at: %v\n", listener.Addr())
-
+	// Create infinite loop for accepting all new client connections
+	//	TODO: make name-setting non-blocking
 	for {
 		conn, err := listener.Accept()
 		conn.Write([]byte("Enter a username:\n"))
@@ -52,12 +56,18 @@ func main() {
 	}
 }
 
+// clientHandler handles spinning off the concurrent reading of a newly
+//	created client, and the writing to clients of any client messages
 func clientHandler(client Client) {
-	go readConnMessages(client)
-	go writeConnsMessages()
+	go readClientMessages(client)
+	go writeClientMessages()
 }
 
-func readConnMessages(client Client) {
+// readClientMessages creates a go routine per created client
+//	which will read any new messages into the messages channel.
+// 	Watched for a close command which closes and removes the
+//	client from the clients slice and exits the go routine
+func readClientMessages(client Client) {
 	go func() {
 		for {
 			input, _ := bufio.NewReader(client.conn).ReadString('\n')
@@ -72,7 +82,10 @@ func readConnMessages(client Client) {
 	}()
 }
 
-func writeConnsMessages() {
+// writeClientMessages ranges over all new messages passed to the
+//	messages channel. It iterates over our slice of clients
+//	and writes the message to all clients
+func writeClientMessages() {
 	for message := range messages {
 		log.Printf("Writing Message: %v", message)
 		for _, client := range clients {
@@ -81,6 +94,8 @@ func writeConnsMessages() {
 	}
 }
 
+// closeCientConnection takes in a client, fines that client
+//	in the global clients slice, and removes it.
 func closeClientConnection(client Client) {
 	for i, c := range clients {
 		if c.conn.RemoteAddr() == client.conn.RemoteAddr() {
