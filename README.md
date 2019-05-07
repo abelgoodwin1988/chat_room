@@ -4,6 +4,8 @@
 
 Implementation of a tcp chat server and client. There are separate server and client `.go` files and in turn binaries. This package uses the go standard library [net package](https://golang.org/pkg/net/) to create a tcp listener for the server which accepts tcp dialing from clients.
 
+There are some issues with the windows binaries. I suspect it's due to either the bufio buffer size, line terminators, or control characters in the string format for clients.
+
 ## Getting Started
 
 For creating and running the chat server & chat client binaries, see [here](#creating-the-binaries).
